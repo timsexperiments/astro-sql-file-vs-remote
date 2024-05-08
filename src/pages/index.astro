@@ -1,16 +1,65 @@
 ---
+import { db, sql } from 'astro:db';
+import MainLayout from '../layouts/MainLayout.astro';
 
+const structuredQuery = sql`SELECT 1 AS value`;
+const result = await db.run(structuredQuery);
+
+const {
+  rows: [{ value: fileBasedValue }],
+} = result;
+
+let astroStudioValue;
+try {
+  const {
+    // @ts-ignore
+    rows: [[value]],
+  } = result;
+  astroStudioValue = value;
+} catch (e) {
+  console.error(
+    new Error(
+      'This should only happen when the database is being run from a file:',
+      { cause: e },
+    ),
+  );
+}
+
+const {
+  rows: [{ 0: valueThatWorksNoMatterWhat }],
+} = result;
 ---
 
-<html lang="en">
-	<head>
-		<meta charset="utf-8" />
-		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-		<meta name="viewport" content="width=device-width" />
-		<meta name="generator" content={Astro.generator} />
-		<title>Astro</title>
-	</head>
-	<body>
-		<h1>Astro</h1>
-	</body>
-</html>
+<MainLayout>
+  <main class="space-y-4">
+    <p>
+      {
+        fileBasedValue ? (
+          <>
+            The value was [{fileBasedValue}]. Probably from a local / file based
+            DB.
+          </>
+        ) : (
+          <>You must be running with a remote DB on Astro Studio.</>
+        )
+      }
+    </p>
+    <p>
+      {
+        astroStudioValue ? (
+          <>
+            The value was [{astroStudioValue}]. Probably from an Astro DB
+            database.
+          </>
+        ) : (
+          <>You must be running with a local / file based DB.</>
+        )
+      }
+    </p>
+
+    <p>
+      The value was [{valueThatWorksNoMatterWhat}]. This will work no matter
+      which type of connection is being used.
+    </p>
+  </main>
+</MainLayout>
